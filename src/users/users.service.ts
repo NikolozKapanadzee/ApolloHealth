@@ -8,6 +8,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from './constants/user-error-messages';
 
 @Injectable()
 export class UsersService {
@@ -23,7 +27,7 @@ export class UsersService {
     });
 
     if (existingEmail) {
-      throw new BadRequestException('Email already in use');
+      throw new BadRequestException(ERROR_MESSAGES.USER.EMAIL_IN_USE);
     }
 
     const existingPhone = await this.userRepository.findOneBy({
@@ -31,7 +35,7 @@ export class UsersService {
     });
 
     if (existingPhone) {
-      throw new BadRequestException('Phone number already in use');
+      throw new BadRequestException(ERROR_MESSAGES.USER.PHONE_IN_USE);
     }
 
     const newUser = this.userRepository.create(createUserDto);
@@ -39,7 +43,7 @@ export class UsersService {
     await this.userRepository.save(newUser);
 
     return {
-      message: 'User has been created',
+      message: SUCCESS_MESSAGES.USER.CREATED,
       data: newUser,
     };
   }
@@ -51,7 +55,7 @@ export class UsersService {
   async findOne(id: number) {
     const existUser = await this.userRepository.findOneBy({ id });
     if (!existUser) {
-      throw new NotFoundException('User Does Not Exist');
+      throw new NotFoundException(ERROR_MESSAGES.USER.NOT_FOUND);
     }
     return existUser;
   }
@@ -59,12 +63,12 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto) {
     const existUser = await this.userRepository.findOneBy({ id });
     if (!existUser) {
-      throw new NotFoundException('User Does Not Exist');
+      throw new NotFoundException(ERROR_MESSAGES.USER.NOT_FOUND);
     }
     Object.assign(existUser, updateUserDto);
     await this.userRepository.save(existUser);
     return {
-      message: 'User Has Updated Successfully',
+      message: SUCCESS_MESSAGES.USER.UPDATED,
       data: existUser,
     };
   }
@@ -72,11 +76,11 @@ export class UsersService {
   async remove(id: number) {
     const existUser = await this.userRepository.findOneBy({ id });
     if (!existUser) {
-      throw new BadRequestException('User Does Not Exist');
+      throw new BadRequestException(ERROR_MESSAGES.USER.NOT_FOUND);
     }
     await this.userRepository.remove(existUser);
     return {
-      message: 'User Has Been Deleted Successfully',
+      message: SUCCESS_MESSAGES.USER.DELETED,
       data: existUser,
     };
   }

@@ -1,11 +1,13 @@
-import { UserRole } from 'src/common/enums/UserRole.enum';
 import {
   Column,
   CreateDateColumn,
+  Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserRole } from '../../common/enums/UserRole.enum';
 
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -18,7 +20,7 @@ export class User {
   @Column()
   lastName: string;
   @Column({ unique: true })
-  phoneNumber: number;
+  phoneNumber: string;
   @CreateDateColumn()
   createdAt: Date;
   @UpdateDateColumn()

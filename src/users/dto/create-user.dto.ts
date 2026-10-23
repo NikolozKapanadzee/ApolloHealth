@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
+  IsPhoneNumber,
   IsString,
   MaxLength,
   MinLength,
@@ -23,6 +24,7 @@ export class CreateUserDto {
   @IsString()
   firstName: string;
   @IsNotEmpty()
-  @IsNumber()
-  phoneNumber: number;
+  @IsString()
+  @IsPhoneNumber('GE')
+  phoneNumber: string;
 }

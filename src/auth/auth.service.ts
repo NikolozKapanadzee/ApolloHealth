@@ -66,8 +66,6 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException(USER_ERROR_MESSAGES.USER.NOT_FOUND);
     }
-    console.log(user);
-
     const isPassEqual = await bcrypt.compare(password, user.password);
     if (!isPassEqual) {
       throw new BadRequestException(
@@ -80,5 +78,13 @@ export class AuthService {
       message: AUTH_SUCCESS_MESSAGES.AUTH.LOGIN,
       accessToken: accessToken,
     };
+  }
+
+  async currentUser(userId: number) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException(USER_ERROR_MESSAGES.USER.NOT_FOUND);
+    }
+    return user;
   }
 }

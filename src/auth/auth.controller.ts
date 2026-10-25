@@ -4,6 +4,10 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { UserId } from '../decorators/user.decorator';
 import { IsAuthGuard } from '../guards/isAuthGuard.guard';
+import { CreateStaffDto } from './dtos/create-staff.dto';
+import { RolesGuard } from '../guards/rolesGuard.guard';
+import { Roles } from '../decorators/role.decorator';
+import { UserRole } from '../common/enums/UserRole.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -21,5 +25,12 @@ export class AuthController {
   @Get('current-user')
   currentUser(@UserId() userId: number) {
     return this.authService.currentUser(userId);
+  }
+
+  @UseGuards(IsAuthGuard, RolesGuard)
+  @Roles(UserRole.DIRECTOR)
+  @Post('staff')
+  createStaff(@Body() createStaffDto: CreateStaffDto) {
+    return this.authService.createStaff(createStaffDto);
   }
 }

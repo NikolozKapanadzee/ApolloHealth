@@ -18,7 +18,7 @@ export class IsAuthGuard implements CanActivate {
     }
     try {
       const payload = this.jwtService.verify(token);
-      req.user = { id: payload.sub, email: payload.email };
+      req.user = { id: payload.sub, role: payload.role };
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }

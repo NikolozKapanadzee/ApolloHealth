@@ -19,7 +19,7 @@ export class AuthController {
 
   @UseGuards(IsAuthGuard)
   @Get('current-user')
-  currentUser(@UserId() userId) {
+  currentUser(@UserId() userId: number) {
     return this.authService.currentUser(userId);
   }
 }

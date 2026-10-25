@@ -41,9 +41,10 @@ export class AuthService {
       password: await bcrypt.hash(registerDto.password, 10),
     });
     await this.userRepository.save(user);
+    const { password, ...safeUser } = user;
     return {
       message: AUTH_SUCCESS_MESSAGES.AUTH.REGISTERED,
-      data: user,
+      data: safeUser,
     };
   }
   async login(loginDto: LoginDto) {

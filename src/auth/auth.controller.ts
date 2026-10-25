@@ -30,7 +30,10 @@ export class AuthController {
   @UseGuards(IsAuthGuard, RolesGuard)
   @Roles(UserRole.DIRECTOR)
   @Post('staff')
-  createStaff(@Body() createStaffDto: CreateStaffDto) {
-    return this.authService.createStaff(createStaffDto);
+  createStaff(
+    @Body() createStaffDto: CreateStaffDto,
+    @UserId() directorId: number,
+  ) {
+    return this.authService.createStaff(createStaffDto, directorId);
   }
 }

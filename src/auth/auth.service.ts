@@ -70,9 +70,9 @@ export class AuthService {
     };
   }
 
-  async createStaff(createStaffDto: CreateStaffDto) {
+  async createStaff(createStaffDto: CreateStaffDto, directorId: number) {
     const { userRole, ...rest } = createStaffDto;
-    const data = await this.createUser(rest, userRole);
+    const data = await this.createUser(rest, userRole, directorId);
     return {
       message: AUTH_STAFF_MESSAGES.AUTH.REGISTRATION,
       data: data,
@@ -87,7 +87,11 @@ export class AuthService {
     return user;
   }
 
-  private async createUser(registerDto: RegisterDto, userRole?: UserRole) {
+  private async createUser(
+    registerDto: RegisterDto,
+    userRole?: UserRole,
+    createdById?: number,
+  ) {
     const email = registerDto.email.toLowerCase().trim();
     const { phoneNumber } = registerDto;
     const emailInUse = await this.userRepository.existsBy({ email });
@@ -103,6 +107,7 @@ export class AuthService {
       email,
       password: await bcrypt.hash(registerDto.password, 10),
       ...(userRole && { userRole }),
+      ...(createdById && { createdById }),
     });
     await this.userRepository.save(user);
     return {

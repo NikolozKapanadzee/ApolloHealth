@@ -11,3 +11,9 @@ export const AUTH_SUCCESS_MESSAGES = {
     LOGIN: 'User Has logged in successfully',
   },
 } as const;
+
+export const AUTH_STAFF_MESSAGES = {
+  AUTH: {
+    REGISTRATION: 'New staff member created successfully',
+  },
+} as const;

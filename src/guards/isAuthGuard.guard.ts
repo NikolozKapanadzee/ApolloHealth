@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { COMMON_MESSAGES } from '../common/constants/common.constants';
 
 @Injectable()
 export class IsAuthGuard implements CanActivate {
@@ -14,13 +15,15 @@ export class IsAuthGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const token = this.getTokenFromHeaders(req.headers);
     if (!token) {
-      throw new UnauthorizedException('Token missing');
+      throw new UnauthorizedException(COMMON_MESSAGES.TOKEN.NO_TOKEN);
     }
     try {
       const payload = this.jwtService.verify(token);
       req.user = { id: payload.sub, role: payload.role };
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException(
+        COMMON_MESSAGES.TOKEN.INVALID_OR_EXPIRED_TOKEN,
+      );
     }
     return true;
   }

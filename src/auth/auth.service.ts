@@ -1,8 +1,8 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dtos/register.dto';
@@ -38,35 +38,28 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const email = loginDto.email.toLowerCase().trim();
-    const { password } = loginDto;
+
     const user = await this.userRepository.findOne({
       where: { email },
-      select: {
-        password: true,
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        userRole: true,
-        phoneNumber: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true, password: true, userRole: true },
     });
-    if (!user) {
-      throw new NotFoundException(USER_ERROR_MESSAGES.USER.NOT_FOUND);
-    }
-    const isPassEqual = await bcrypt.compare(password, user.password);
-    if (!isPassEqual) {
-      throw new BadRequestException(
+
+    const isPasswordValid =
+      !!user && (await bcrypt.compare(loginDto.password, user.password));
+
+    if (!user || !isPasswordValid) {
+      throw new UnauthorizedException(
         AUTH_ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
       );
     }
-    const payload = { sub: user.id, role: user.userRole };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      role: user.userRole,
+    });
+
     return {
       message: AUTH_SUCCESS_MESSAGES.AUTH.LOGIN,
-      accessToken: accessToken,
+      accessToken,
     };
   }
 

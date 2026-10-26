@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../common/enums/UserRole.enum';
 import { ROLES_KEY } from '../decorators/role.decorator';
+import { COMMON_MESSAGES } from '../common/constants/common.constants';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -25,7 +26,9 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
 
     if (!user || !requiredRoles.includes(user.role)) {
-      throw new ForbiddenException('You do not have permission');
+      throw new ForbiddenException(
+        COMMON_MESSAGES.PERMISSION.PERMISSION_DENIED,
+      );
     }
 
     return true;

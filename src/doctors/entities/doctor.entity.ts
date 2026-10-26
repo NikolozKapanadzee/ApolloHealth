@@ -30,4 +30,7 @@ export class Doctor {
 
   @Column({ type: 'int', default: 0 })
   yearsOfExperience: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  imageUrl: string | null;
 }

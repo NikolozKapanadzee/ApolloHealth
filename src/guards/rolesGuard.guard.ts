@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '../common/enums/UserRole.enum';
 import { ROLES_KEY } from '../decorators/role.decorator';
 import { COMMON_MESSAGES } from '../common/constants/common.constants';
+import { AuthenticatedRequest } from '../common/interfaces/auth.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -23,8 +24,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
-
+    const { user } = context.switchToHttp().getRequest<AuthenticatedRequest>();
     if (!user || !requiredRoles.includes(user.role)) {
       throw new ForbiddenException(
         COMMON_MESSAGES.PERMISSION.PERMISSION_DENIED,

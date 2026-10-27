@@ -7,18 +7,19 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
-import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   AUTH_ERROR_MESSAGES,
-  AUTH_STAFF_MESSAGES,
   AUTH_SUCCESS_MESSAGES,
 } from './constants/auth-messages';
 import * as bcrypt from 'bcrypt';
 import { USER_ERROR_MESSAGES } from '../users/constants/user-messages';
 import { UserRole } from '../common/enums/UserRole.enum';
 import { CreateStaffDto } from './dtos/create-staff.dto';
+import { Doctor } from '../doctors/entities/doctor.entity';
+import { DOCTOR_ERROR_MESSAGES } from '../doctors/constants/doctor-messages.constants';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -64,12 +66,46 @@ export class AuthService {
   }
 
   async createStaff(createStaffDto: CreateStaffDto, directorId: number) {
-    const { userRole, ...rest } = createStaffDto;
-    const data = await this.createUser(rest, userRole, directorId);
-    return {
-      message: AUTH_STAFF_MESSAGES.AUTH.REGISTRATION,
-      data: data,
-    };
+    const { userRole, doctorProfile, ...rest } = createStaffDto;
+
+    const data = await this.dataSource.transaction(async (manager) => {
+      const user = await this.createUser(rest, userRole, directorId, manager);
+
+      if (userRole !== UserRole.DOCTOR || !doctorProfile) {
+        return { ...user };
+      }
+
+      const licenseNumber = doctorProfile.licenseNumber.trim().toUpperCase();
+
+      if (await manager.existsBy(Doctor, { licenseNumber })) {
+        throw new ConflictException(
+          DOCTOR_ERROR_MESSAGES.DOCTOR.LICENSE_IN_USE,
+        );
+      }
+
+      const doctor = await manager.save(
+        Doctor,
+        manager.create(Doctor, {
+          ...doctorProfile,
+          licenseNumber,
+          userId: user.id,
+        }),
+      );
+
+      return {
+        ...user,
+        doctorProfile: {
+          id: doctor.id,
+          specialty: doctor.specialty,
+          licenseNumber: doctor.licenseNumber,
+          bio: doctor.bio,
+          yearsOfExperience: doctor.yearsOfExperience,
+          imageUrl: doctor.imageUrl,
+        },
+      };
+    });
+
+    return { message: AUTH_SUCCESS_MESSAGES.AUTH.REGISTERED, data };
   }
 
   async currentUser(userId: number) {
@@ -84,25 +120,29 @@ export class AuthService {
     registerDto: RegisterDto,
     userRole?: UserRole,
     createdById?: number,
+    manager?: EntityManager,
   ) {
+    const repo = manager ? manager.getRepository(User) : this.userRepository;
+
     const email = registerDto.email.toLowerCase().trim();
     const { phoneNumber } = registerDto;
-    const emailInUse = await this.userRepository.existsBy({ email });
-    if (emailInUse) {
+
+    if (await repo.existsBy({ email })) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.AUTH.EMAIL_IN_USE);
     }
-    const phoneInUse = await this.userRepository.existsBy({ phoneNumber });
-    if (phoneInUse) {
+    if (await repo.existsBy({ phoneNumber })) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.AUTH.PHONE_IN_USE);
     }
-    const user = this.userRepository.create({
+
+    const user = repo.create({
       ...registerDto,
       email,
       password: await bcrypt.hash(registerDto.password, 10),
       ...(userRole && { userRole }),
       ...(createdById && { createdById }),
     });
-    await this.userRepository.save(user);
+    await repo.save(user);
+
     return {
       id: user.id,
       email: user.email,

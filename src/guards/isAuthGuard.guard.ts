@@ -6,19 +6,23 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { COMMON_MESSAGES } from '../common/constants/common.constants';
+import {
+  AuthenticatedRequest,
+  JwtPayload,
+} from '../common/interfaces/auth.interface';
 
 @Injectable()
 export class IsAuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest();
-    const token = this.getTokenFromHeaders(req.headers);
+    const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const token = this.getTokenFromHeader(req.headers.authorization);
     if (!token) {
       throw new UnauthorizedException(COMMON_MESSAGES.TOKEN.NO_TOKEN);
     }
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<JwtPayload>(token);
       req.user = { id: payload.sub, role: payload.role };
     } catch {
       throw new UnauthorizedException(
@@ -26,6 +30,11 @@ export class IsAuthGuard implements CanActivate {
       );
     }
     return true;
+  }
+  private getTokenFromHeader(authorization?: string): string | null {
+    if (!authorization) return null;
+    const [type, token] = authorization.split(' ');
+    return type === 'Bearer' ? token : null;
   }
   private getTokenFromHeaders(headers: Record<string, string | undefined>) {
     const authorization = headers['authorization'];

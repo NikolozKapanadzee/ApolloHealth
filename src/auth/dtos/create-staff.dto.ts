@@ -8,7 +8,7 @@ export class CreateStaffDto extends RegisterDto {
   @IsIn([UserRole.DOCTOR, UserRole.RECEPTIONIST])
   userRole: UserRole.DOCTOR | UserRole.RECEPTIONIST;
 
-  @ValidateIf((o) => o.userRole === UserRole.DOCTOR)
+  @ValidateIf((o: CreateStaffDto) => o.userRole === UserRole.DOCTOR)
   @IsDefined()
   @ValidateNested()
   @Type(() => CreateDoctorProfileDto)

@@ -1,24 +1,21 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
   Delete,
+  UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DoctorsService } from './doctors.service';
-import { CreateDoctorProfileDto } from './dto/create-doctor-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
+import { IsAuthGuard } from '../guards/isAuthGuard.guard';
 
 @Controller('doctors')
+@UseGuards(IsAuthGuard)
 export class DoctorsController {
   constructor(private readonly doctorsService: DoctorsService) {}
-
-  @Post()
-  create(@Body() createDoctorProfileDto: CreateDoctorProfileDto) {
-    return this.doctorsService.create(createDoctorProfileDto);
-  }
 
   @Get()
   findAll() {
@@ -26,8 +23,8 @@ export class DoctorsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.doctorsService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.doctorsService.findOne(id);
   }
 
   @Patch(':id')

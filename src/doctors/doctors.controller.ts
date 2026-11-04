@@ -13,6 +13,11 @@ import { DoctorsService } from './doctors.service';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 import { IsAuthGuard } from '../guards/isAuthGuard.guard';
 import { FindDoctorsQueryDto } from './dto/find-doctors-query.dto';
+import { RolesGuard } from '../guards/rolesGuard.guard';
+import { Roles } from '../decorators/role.decorator';
+import { UserRole } from '../common/enums/UserRole.enum';
+import { CurrentUser } from '../decorators/user.decorator';
+import { AuthUser } from '../common/interfaces/auth.interface';
 
 @Controller('doctors')
 @UseGuards(IsAuthGuard)
@@ -30,15 +35,20 @@ export class DoctorsController {
   }
 
   @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.DIRECTOR, UserRole.DOCTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDoctorProfileDto: UpdateDoctorProfileDto,
+    @CurrentUser() currentUser: AuthUser,
   ) {
-    return this.doctorsService.update(+id, updateDoctorProfileDto);
+    return this.doctorsService.update(id, updateDoctorProfileDto, currentUser);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.doctorsService.remove(+id);
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.DIRECTOR)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.doctorsService.remove(id);
   }
 }

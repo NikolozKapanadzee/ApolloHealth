@@ -3,8 +3,9 @@ import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 import { Doctor } from './entities/doctor.entity';
 import { DoctorPublicProfile } from '../common/interfaces/doctor-public.interface';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { DOCTOR_ERROR_MESSAGES } from './constants/doctor-messages.constants';
+import { FindDoctorsQueryDto } from './dto/find-doctors-query.dto';
 
 @Injectable()
 export class DoctorsService {
@@ -12,8 +13,19 @@ export class DoctorsService {
     @InjectRepository(Doctor)
     private readonly doctorsRepository: Repository<Doctor>,
   ) {}
-  findAll() {
-    return `This action returns all doctors`;
+  async findAll({ page, limit, specialty }: FindDoctorsQueryDto) {
+    const [doctors, total] = await this.doctorsRepository.findAndCount({
+      where: specialty ? { specialty: ILike(`%${specialty}%`) } : {},
+      relations: { user: true },
+      order: { id: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data: doctors.map((doctor) => this.toPublicProfile(doctor)),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number) {
